@@ -73,8 +73,8 @@ class Fabulous_RSS_Reader extends WP_Widget {
         $output .= '<div class="widget widget_fabulous_rss_reader">';
         $output .= '<h3 class="widget-title">' . $instance['title'] . '</h3>';
         $output .= '<ul class="fabulous-rss-reader">';
-        foreach ($items as $item) {
-            $output .= $this->render_item($item, $instance['item_template']);
+        for ( $i = 0; $i < (int) $instance['max_itens_to_show']; $i++ ) {
+            $output .= $this->render_item($items[$i], $instance['item_template']);
         }
         $output .= '</ul>';
         $output .= '</div>';
