@@ -65,6 +65,12 @@ class Fabulous_RSS_Reader extends WP_Widget {
         $output .= '<h3 class="widget-title">' . $instance['title'] . '</h3>';
         $output .= '<ul class="fabulous-rss-reader">';
         for ( $i = 0; $i < (int) $instance['max_itens_to_show']; $i++ ) {
+            // If there is no item, break the for. This can happens with
+            // broken feed_url links or if you set to show more itens than
+            // RSS can show.
+            if(empty($items[$i])) {
+                break;
+            }
             $output .= $this->render_item($items[$i], $instance['item_template']);
         }
         $output .= '</ul>';
@@ -72,34 +78,33 @@ class Fabulous_RSS_Reader extends WP_Widget {
         echo $output;
     }
 
+
     public function get_feed($feed_url = '') {
-        $cached_xml = get_transient('items');
-        if(false == $cached_xml) {
-            $feed_xml = $this->get_feed_content($feed_url);
-            set_transient('items', $feed_xml->asXML(), 60*60); // Expires in 1 hour
-        } else {
-            $feed_xml = simplexml_load_string($cached_xml);
+        // delete_transient($feed_url);
+        $xml = get_transient($feed_url);
+        // If there is no cached xml, request it from the interwebs
+        if(false == $xml) {
+            $xml = $this->request_xml($feed_url);
+            // Cache requested xml for one hour
+            set_transient($feed_url, $xml, 60*60);
         }
-        $items = $this->get_feed_items($feed_xml);
-        return $items;
-    }
-
-    public function get_feed_content($feed_url = '') {
-        // If there is no url, return false
-        if(empty($feed_url)) {
-            return false;
-        }
-        $feed_content = file_get_contents($feed_url);
-        $feed = simplexml_load_string($feed_content);
-        return $feed;
-    }
-
-    public function get_feed_items(SimpleXMLElement $feed) {
-        // If there is no url, return an empty array
-        if(empty($feed->channel)){
+        // Parse the xml to an object
+        $rss = simplexml_load_string($xml);
+        // If there is no channel, return an empty array avoiding creshes
+        if(empty($rss) || empty($rss->channel) || empty($rss->channel->item)) {
             return array();
         }
-        return $feed->channel->item;
+        // Return the post entries
+        return $rss->channel->item;
+    }
+
+    public function request_xml($feed_url = '') {
+        $url_content = file_get_contents($feed_url);
+        // If there is no content available, return an empty string
+        if(empty($url_content)) {
+            return '';
+        }
+        return $url_content;
     }
 
     public function render_item(SimpleXMLElement $item) {
