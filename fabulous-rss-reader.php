@@ -8,7 +8,6 @@ Author: Murilo Polese
 Author URI: http://www.murilopolese.com.br/
 License: WTFPL
 */
-
 class Fabulous_RSS_Reader extends WP_Widget {
     
     public function Fabulous_RSS_Reader() {
@@ -33,31 +32,23 @@ class Fabulous_RSS_Reader extends WP_Widget {
             <label for="<?php echo $this->get_field_id('title'); ?>">
                 <?php _e('Widget title', 'fabulous_rss_reader'); ?>
             </label>
-            <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" 
-            name="<?php echo $this->get_field_name('title'); ?>" type="text" 
-            value="<?php echo $title; ?>" />
+            <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
         </p>
         <p>
             <label for="<?php echo $this->get_field_id('feed_url'); ?>">
                 <?php _e('RSS feed url', 'fabulous_rss_reader'); ?>
             </label>
-            <input class="widefat" id="<?php echo $this->get_field_id('feed_url'); ?>" 
-            name="<?php echo $this->get_field_name('feed_url'); ?>" type="text" 
-            value="<?php echo $feed_url; ?>" />
+            <input class="widefat" id="<?php echo $this->get_field_id('feed_url'); ?>" name="<?php echo $this->get_field_name('feed_url'); ?>" type="text" value="<?php echo $feed_url; ?>" />
         </p>
         <p>
             <label for="<?php echo $this->get_field_id('max_itens_to_show'); ?>">
                 <?php _e('How many itens to show?', 'fabulous_rss_reader'); ?>
             </label>
-            <input class="widefat" type="text"
-            id="<?php echo $this->get_field_id('max_itens_to_show'); ?>" 
-            name="<?php echo $this->get_field_name('max_itens_to_show'); ?>"  
-            value="<?php echo $max_itens_to_show; ?>" />
+            <input class="widefat" type="text" id="<?php echo $this->get_field_id('max_itens_to_show'); ?>" name="<?php echo $this->get_field_name('max_itens_to_show'); ?>" value="<?php echo $max_itens_to_show; ?>" />
         </p>
         <?php
     }
 
-    // Save changes
     public function update( $new_instance, $old_instance ) {
         $instance = $old_instance;
         $instance['feed_url'] = strip_tags( $new_instance['feed_url'] );
@@ -82,7 +73,13 @@ class Fabulous_RSS_Reader extends WP_Widget {
     }
 
     public function get_feed($feed_url = '') {
-        $feed_xml = $this->get_feed_content($feed_url);
+        $cached_xml = get_transient('items');
+        if(false == $cached_xml) {
+            $feed_xml = $this->get_feed_content($feed_url);
+            set_transient('items', $feed_xml->asXML(), 60*60); // Expires in 1 hour
+        } else {
+            $feed_xml = simplexml_load_string($cached_xml);
+        }
         $items = $this->get_feed_items($feed_xml);
         return $items;
     }
