@@ -99,15 +99,17 @@ class Fabulous_RSS_Reader extends WP_Widget {
     }
 
     public function request_xml($feed_url = '') {
-        $url_content = file_get_contents($feed_url);
-        // If there is no content available, return an empty string
-        if(empty($url_content)) {
+        try {
+            $url_content = file_get_contents($feed_url);
+            return $url_content;
+        } catch (Exception $e) {
             return '';
         }
-        return $url_content;
+        
     }
 
     public function render_item(SimpleXMLElement $item) {
+        // TODO: Templates
         return '<li><a href="' . $item->link . '">' . $item->title . '</a></li>';
     }
 
